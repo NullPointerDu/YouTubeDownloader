@@ -38,4 +38,4 @@ def download(url, file):
 
 
 
-download("https://www.youtube.com/watch?v=HHBsvKnCkwI", "asd.webm")
+download(input("url: "), input("file path: "))
