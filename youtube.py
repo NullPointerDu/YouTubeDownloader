@@ -3,17 +3,22 @@ import re
 import json
 import os
 
+# customize UA
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
+
+# specify ffmpeg executable
 ffmpeg_path = r"C:\ToolSet\ffmpeg-20200727-16c2ed4-win64-static\bin\ffmpeg.exe"
 
-proxies = {
-'http': 'socks5h://127.0.0.1:1080', 
-'https': 'socks5h://127.0.0.1:1080'
-}
 
+# proxies = {
+# 'http': 'socks5h://127.0.0.1:1080', 
+# 'https': 'socks5h://127.0.0.1:1080'
+# }
+# add proxies
+proxies = {}
 
 def get(url, headers, proxy=proxies):
-    return requests.get(url, headers=headers, proxies=proxies)
+    return requests.get(url, headers=headers, proxies=proxy)
 
 def get_adaptive_formats(url):
     req = get(url, headers={"User-Agent": UA})
@@ -31,6 +36,7 @@ def download(url, file):
     info_video = None
     info_audio = None
     i = 0
+    # You can customize video and audio streams here, the loop chooses the first appearance.
     while info_video is None or info_audio is None:
         info = info_list[i]
         if info["mimeType"].find("video/mp4") != -1 and info_video is None:
@@ -64,6 +70,7 @@ def download_content(info, file):
             f.write(buffer)
 
 def merge(video_file, audio_file, output_file):
+    print("Merging video and audio...")
     cmd = f"{ffmpeg_path} -i \"{video_file}\" -i \"{audio_file}\" -c:v copy -c:a aac \"{output_file}\""
     os.system(cmd)
     os.remove(video_file)
@@ -100,11 +107,13 @@ def download_playlist(url, directory, filename, index_range=""):
 def main():
     islist = input("list?(y/n)")
     if (islist == "y"):
+        # e.g. range = "1-3", this downloads the first three videos of the playlist
         download_playlist(input("url: "), input("directory: "), input("filename:"), input("range:"))
     elif (islist == "n"):
         download(input("url: "), input("file path: "))
     else:
         print("please type (y/n)")
+        main()
 
 if __name__ == "__main__":
     main()
