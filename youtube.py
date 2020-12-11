@@ -4,11 +4,11 @@ import json
 import os
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
-ffmpeg_path = "/Users/vincentdu/Env/FFmpeg/ffmpeg"
+ffmpeg_path = r"C:\ToolSet\ffmpeg-20200727-16c2ed4-win64-static\bin\ffmpeg.exe"
 
 proxies = {
-'http': 'socks5h://127.0.0.1:1086',
-'https': 'socks5h://127.0.0.1:1086'
+'http': 'socks5h://127.0.0.1:1080', 
+'https': 'socks5h://127.0.0.1:1080'
 }
 
 
@@ -64,14 +64,47 @@ def download_content(info, file):
             f.write(buffer)
 
 def merge(video_file, audio_file, output_file):
-    cmd = f"{ffmpeg_path} -i {video_file} -i {audio_file} -c:v copy -c:a aac {output_file}"
+    cmd = f"{ffmpeg_path} -i \"{video_file}\" -i \"{audio_file}\" -c:v copy -c:a aac \"{output_file}\""
     os.system(cmd)
     os.remove(video_file)
     os.remove(audio_file)
 
 
+def get_list_info(url):
+    req = get(url, headers={"User-Agent": UA})
+    text = req.text
+    pattern = re.compile(r"\"playlistVideoRenderer\":\{\"videoId\":\"(.*?)\"")
+    info = re.findall(pattern, text)
+    return(info)
 
-url = "https://www.youtube.com/watch?v=7K1sB05pE0A&list=PL590CCC2BC5AF3BC1"
-path = "/Users/vincentdu/Desktop/downloads/lec1"
-download(url, path)
-# download(input("url: "), input("file path: "))
+def download_playlist(url, directory, filename, index_range=""):
+    vid_urls = get_list_info(url)
+    BASE_URL = r"https://www.youtube.com/watch?v="
+    length = len(vid_urls)
+    lower = 0
+    upper = length - 1
+    if index_range != "":
+        s = index_range.split("-")
+        if s[0] != "" and int(s[0]) > 0:
+            lower = int(s[0]) - 1
+        if s[1] != "" and int(s[1]) < length:
+            upper = int(s[1]) - 1
+    i = lower
+    while i <= upper:
+        index = i + 1
+        u = BASE_URL + vid_urls[i]
+        print(f"downloading vid {index}: {u}")
+        download(u, os.path.join(directory, f"{filename}_{index}"))
+        i += 1
+
+def main():
+    islist = input("list?(y/n)")
+    if (islist == "y"):
+        download_playlist(input("url: "), input("directory: "), input("filename:"), input("range:"))
+    elif (islist == "n"):
+        download(input("url: "), input("file path: "))
+    else:
+        print("please type (y/n)")
+
+if __name__ == "__main__":
+    main()
